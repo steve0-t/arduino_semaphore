@@ -1,0 +1,5 @@
+.cache/
+.direnv/
+build/
+cmds.txt
+vgcore.54264
