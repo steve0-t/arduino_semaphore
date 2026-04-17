@@ -34,13 +34,9 @@
         ninja
         clang-tools
         clang
-        arduino-ci
-        arduino-cli
-        arduino
-        arduino-ide
 
         platformio
-        platformio-core
+        platformio-core.udev
       ];
 
       shellHook = ''
