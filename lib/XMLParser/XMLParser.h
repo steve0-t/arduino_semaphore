@@ -1,8 +1,10 @@
 #ifndef XML_PARSER_H
 #define XML_PARSER_H
 
+#include <Arduino.h>
 #include "../Abbreviations/Abbreviations.h"
 #include "../Rstr/Rstr.h"
+#include "../XMLFields/XMLFields.h"
 
 #define OPENING_BRACKET '<'
 #define CLOSING_BRACKET '>'
@@ -45,12 +47,26 @@ class XMLParser {
     XMLParser();
     ~XMLParser();
 
+    void   reset();
     i8     isXML(const rstr& input);
     Retval parse(const rstr& input);
 
+    Type   getCmpType() const {
+        return m_cmdType;
+    }
+
+    State getState() const {
+        return m_state;
+    }
+
+    XMLFields getFields() const {
+        return m_xmlFields;
+    }
+
   private:
-    Type  m_cmdType;
-    State m_state;
+    Type      m_cmdType;
+    State     m_state;
+    XMLFields m_xmlFields;
 };
 
 #endif

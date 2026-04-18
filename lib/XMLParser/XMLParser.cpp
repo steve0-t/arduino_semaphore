@@ -1,5 +1,4 @@
 #include "XMLParser.h"
-#include "Arduino.h"
 
 XMLParser::XMLParser() : m_cmdType(TCOUNT), m_state(SCOUNT) {}
 
@@ -12,10 +11,10 @@ Retval XMLParser::parse(const rstr& input) {
     u8 idx = 0, buf_idx = 0;
     i8 specification = 0;
 
-    Serial.println(cpy);
+    // Serial.println(cpy);
     while ((curr_char = cpy++) != nullptr) {
         // Serial.print(*curr_char);
-        Serial.println(buf);
+        // Serial.println(buf);
         // Serial.println(specification);
         if (idx == 0 && *curr_char == '!')
             return COMMENT;
@@ -28,9 +27,11 @@ Retval XMLParser::parse(const rstr& input) {
                 if (strcmp(buf, "cmd") != 0)
                     return BAD_FORMAT;
             }
-            memset((void*)buf, 0, sizeof(buf));
-            buf_idx = 0;
-            idx++;
+            if (buf_idx != 0) {
+                memset((void*)buf, 0, sizeof(buf));
+                buf_idx = 0;
+                idx++;
+            }
             continue;
         }
 
@@ -52,19 +53,22 @@ Retval XMLParser::parse(const rstr& input) {
             if (idx == 1) {
                 for (i8 i = 0; i < TCOUNT; i++) {
                     if (strcmp(buf, types[i]) == 0)
-                        this->m_cmdType = (Type)i;
+                        m_cmdType = (Type)i;
                 }
-                if (this->m_cmdType == TCOUNT)
+                if (m_cmdType == TCOUNT)
                     return UNKNOWN_CMD;
+                m_xmlFields.type = types[m_cmdType];
             }
 
             if (idx == 2) {
                 for (i8 i = 0; i < SCOUNT; i++) {
                     if (strcmp(buf, states[i]) == 0)
-                        this->m_state = (State)i;
+                        m_state = (State)i;
                 }
-                if (this->m_state == SCOUNT)
+                if (m_state == SCOUNT)
                     return BAD_STATE;
+                // strcpy(m_xmlFields.state, types[m_cmdType]);
+                m_xmlFields.state = states[m_state];
             }
             continue;
         }
@@ -73,6 +77,12 @@ Retval XMLParser::parse(const rstr& input) {
         buf[buf_idx++] = *curr_char;
     }
     return VALID;
+}
+
+void XMLParser::reset() {
+    m_cmdType   = TCOUNT;
+    m_state     = SCOUNT;
+    m_xmlFields = XMLFields();
 }
 
 i8 XMLParser::isXML(const rstr& input) {
