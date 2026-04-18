@@ -5,9 +5,9 @@ XMLParser::XMLParser() : m_cmdType(TCOUNT), m_state(SCOUNT) {}
 Retval XMLParser::parse(const rstr& input) {
     if (!isXML(input))
         return BAD_FORMAT;
-    char *beg, *cpy, *curr_char, *prev_char;
+    char *cpy, *curr_char;
     char  buf[256] = {0};
-    beg = cpy = input._str;
+    cpy            = input._str;
     u8 idx = 0, buf_idx = 0;
     i8 specification = 0;
 
