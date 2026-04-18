@@ -39,6 +39,7 @@ int  main() {
     for (;;) {
         input.clear_str();
         parser.reset();
+
         if (caution_sem) {
             current_millis = millis();
             if (current_millis - previous_milis >= blink_interval) {
