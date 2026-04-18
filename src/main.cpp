@@ -50,6 +50,7 @@ int  main() {
 
         if (Serial.available()) {
             input.len = (u64)Serial.readBytesUntil('\n', input._str, 255);
+            // Serial.println(input._str);
             if ((res = parser.parse(input)) < VALID) {
                 // Serial.println("invalid!");
                 if (res > 0 && res < VALID)
