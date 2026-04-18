@@ -19,8 +19,11 @@ Retval XMLParser::parse(const rstr& input) {
         if (idx == 0 && *curr_char == '!')
             return COMMENT;
 
-        if (*curr_char == CLOSING_BRACKET)
+        if (*curr_char == CLOSING_BRACKET) {
+            if (buf[buf_idx] != CLOSING_DELIM)
+                return BAD_FORMAT;
             break;
+        }
 
         if (*curr_char == WHITESPACE) {
             if (idx == 0) {
