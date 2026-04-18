@@ -20,7 +20,7 @@ Retval XMLParser::parse(const rstr& input) {
             return COMMENT;
 
         if (*curr_char == CLOSING_BRACKET) {
-            if (buf[buf_idx] != CLOSING_DELIM)
+            if (buf[buf_idx - 1] != CLOSING_DELIM)
                 return BAD_FORMAT;
             break;
         }
