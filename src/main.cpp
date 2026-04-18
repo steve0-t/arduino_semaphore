@@ -14,6 +14,7 @@ void ready_sem();
 void go_sem();
 i8   set_state(char* response_buffer, const State state, const char* state_str);
 void provide_err_msg(Retval id, char* response_buffer);
+void print_pong(char* response_buffer);
 
 int  main() {
     init();
@@ -48,7 +49,7 @@ int  main() {
         }
 
         if (Serial.available()) {
-            input.len = (u64)Serial.readBytesUntil('\n', input._str, 256);
+            input.len = (u64)Serial.readBytesUntil('\n', input._str, 255);
             if ((res = parser.parse(input)) < VALID) {
                 // Serial.println("invalid!");
                 if (res > 0 && res < VALID)
@@ -60,9 +61,11 @@ int  main() {
                 if (parser.getCmpType() == SET) {
                     caution_sem = set_state(response_buffer, parser.getState(),
                                             parser.getFields().state);
-                } else if (parser.getCmpType()) {
-                    memset(response_buffer, 0, sizeof(response_buffer));
-                    snprintf(response_buffer, 128,
+                } else if (parser.getCmpType() == PING) {
+                    print_pong(response_buffer);
+                } else if (parser.getCmpType() == GET) {
+                    memset(response_buffer, 0, RESPONSE_BUFFER_SIZE);
+                    snprintf(response_buffer, RESPONSE_BUFFER_SIZE,
                              "<rsp status=\"ok\" state=\"%s\"/>",
                              parser.getFields().state);
                     Serial.println(response_buffer);
@@ -118,5 +121,12 @@ void provide_err_msg(Retval id, char* response_buffer) {
     memset(response_buffer, 0, RESPONSE_BUFFER_SIZE);
     snprintf(response_buffer, RESPONSE_BUFFER_SIZE,
              "<rsp status=\"error\" code=\"%s\"/>", responses[id - 1]);
+    Serial.println(response_buffer);
+}
+
+void print_pong(char* response_buffer) {
+    memset(response_buffer, 0, RESPONSE_BUFFER_SIZE);
+    snprintf(response_buffer, RESPONSE_BUFFER_SIZE,
+             "<rsp status=\"ok\" msg=\"PONG\"/>");
     Serial.println(response_buffer);
 }
