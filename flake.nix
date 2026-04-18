@@ -34,6 +34,8 @@
         ninja
         clang-tools
         clang
+        glibc
+        gcc
 
         platformio
         platformio-core.udev
