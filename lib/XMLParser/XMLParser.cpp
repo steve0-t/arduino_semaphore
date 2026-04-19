@@ -2,12 +2,14 @@
 
 XMLParser::XMLParser() : m_cmdType(TCOUNT), m_state(SCOUNT) {}
 
+XMLParser::~XMLParser() {}
+
 Retval XMLParser::parse(const rstr& input) {
     if (!isXML(input))
         return BAD_FORMAT;
     char *cpy, *curr_char;
     char  buf[256] = {0};
-    cpy            = input._str;
+    cpy            = input.data;
     u8 idx = 0, buf_idx = 0;
     i8 specification = 0;
 
@@ -89,7 +91,7 @@ void XMLParser::reset() {
 }
 
 i8 XMLParser::isXML(const rstr& input) {
-    if (input._str == nullptr)
+    if (input.data == nullptr)
         return -1;
     // Serial.println(input._str[0]);
     // Serial.println(input._str[input.len - 1]);
