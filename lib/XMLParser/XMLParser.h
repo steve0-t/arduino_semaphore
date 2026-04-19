@@ -53,7 +53,7 @@ class XMLParser {
     ~XMLParser();
 
     void   reset();
-    i8     isXML(const rstr& input);
+    int8_t isXML(const rstr& input);
     Retval parse(const rstr& input);
 
     Type   getCmpType() const {

@@ -5,8 +5,6 @@
 #include <Arduino.h>
 #else
 #include <cstdint>
-#endif
-
 typedef int8_t   i8;
 typedef int16_t  i16;
 typedef int32_t  i32;
@@ -19,5 +17,6 @@ typedef uint64_t u64;
 
 typedef i8       b8;
 typedef i32      i32;
+#endif
 
 #endif

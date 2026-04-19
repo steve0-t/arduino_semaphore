@@ -5,7 +5,7 @@
 void test_invalid_normal_tag() {
     XMLParser parser      = XMLParser();
     char      buffer[256] = "<name>John</name>";
-    rstr      test        = {.data = buffer, .len = (u16)strlen(buffer)};
+    rstr      test        = {.data = buffer, .len = (uint16_t)strlen(buffer)};
 
     auto      res = parser.parse(test);
     TEST_ASSERT_EQUAL(BAD_FORMAT, res);
@@ -16,7 +16,7 @@ void test_invalid_complicated_tag() {
     char      buffer[256] =
         "<dependency> <groupId>org.springframework.boot</groupId>"
         "<artifactId>spring-boot-starter</artifactId> </dependency>";
-    rstr test = {.data = buffer, .len = (u16)strlen(buffer)};
+    rstr test = {.data = buffer, .len = (uint16_t)strlen(buffer)};
 
     auto res = parser.parse(test);
     TEST_ASSERT_EQUAL(BAD_FORMAT, res);
@@ -34,7 +34,7 @@ void test_buffer_overflow() {
         "<groupId>org.springframework.boot</groupId> "
         "<artifactId>spring-boot-devtools</artifactId> <scope>runtime</scope> "
         "</dependency>";
-    rstr test = {.data = buffer, .len = (u16)strlen(buffer)};
+    rstr test = {.data = buffer, .len = (uint16_t)strlen(buffer)};
 
     auto res = parser.parse(test);
     TEST_ASSERT_EQUAL(BAD_FORMAT, res);
@@ -43,7 +43,7 @@ void test_buffer_overflow() {
 void test_empty_string() {
     XMLParser parser    = XMLParser();
     char      buffer[1] = "";
-    rstr      test      = {.data = buffer, .len = (u16)strlen(buffer)};
+    rstr      test      = {.data = buffer, .len = (uint16_t)strlen(buffer)};
 
     auto      res = parser.parse(test);
     TEST_ASSERT_EQUAL(BAD_FORMAT, res);
@@ -52,7 +52,7 @@ void test_empty_string() {
 void test_comment() {
     XMLParser parser     = XMLParser();
     char      buffer[32] = "<!--this is a comment-->";
-    rstr      test       = {.data = buffer, .len = (u16)strlen(buffer)};
+    rstr      test       = {.data = buffer, .len = (uint16_t)strlen(buffer)};
 
     auto      res = parser.parse(test);
     TEST_ASSERT_EQUAL(COMMENT, res);
@@ -66,11 +66,11 @@ void test_bad_states() {
     char      buffer4[64] = "<cmd type=\"set\" state=\"PARSER\"/>";
     char      buffer5[64] = "<cmd type=\"set\" state=\"ARM\"/>";
 
-    rstr      test1 = {.data = buffer1, .len = (u16)strlen(buffer1)};
-    rstr      test2 = {.data = buffer2, .len = (u16)strlen(buffer2)};
-    rstr      test3 = {.data = buffer3, .len = (u16)strlen(buffer3)};
-    rstr      test4 = {.data = buffer4, .len = (u16)strlen(buffer4)};
-    rstr      test5 = {.data = buffer5, .len = (u16)strlen(buffer5)};
+    rstr      test1 = {.data = buffer1, .len = (uint16_t)strlen(buffer1)};
+    rstr      test2 = {.data = buffer2, .len = (uint16_t)strlen(buffer2)};
+    rstr      test3 = {.data = buffer3, .len = (uint16_t)strlen(buffer3)};
+    rstr      test4 = {.data = buffer4, .len = (uint16_t)strlen(buffer4)};
+    rstr      test5 = {.data = buffer5, .len = (uint16_t)strlen(buffer5)};
 
     auto      res1 = parser.parse(test1);
     auto      res2 = parser.parse(test2);
@@ -89,7 +89,7 @@ void test_ping_pong() {
     XMLParser parser     = XMLParser();
     char      buffer[64] = "<cmd type=\"ping\"/>";
 
-    rstr      test = {.data = buffer, .len = (u16)strlen(buffer)};
+    rstr      test = {.data = buffer, .len = (uint16_t)strlen(buffer)};
 
     auto      res = parser.parse(test);
 
@@ -111,11 +111,11 @@ void test_valid_states() {
     char      buffer4[64] = "<cmd type=\"set\" state=\"CAUTION\"/>";
     char      buffer5[64] = "<cmd type=\"set\" state=\"OFF\"/>";
 
-    rstr      test1 = {.data = buffer1, .len = (u16)strlen(buffer1)};
-    rstr      test2 = {.data = buffer2, .len = (u16)strlen(buffer2)};
-    rstr      test3 = {.data = buffer3, .len = (u16)strlen(buffer3)};
-    rstr      test4 = {.data = buffer4, .len = (u16)strlen(buffer4)};
-    rstr      test5 = {.data = buffer5, .len = (u16)strlen(buffer5)};
+    rstr      test1 = {.data = buffer1, .len = (uint16_t)strlen(buffer1)};
+    rstr      test2 = {.data = buffer2, .len = (uint16_t)strlen(buffer2)};
+    rstr      test3 = {.data = buffer3, .len = (uint16_t)strlen(buffer3)};
+    rstr      test4 = {.data = buffer4, .len = (uint16_t)strlen(buffer4)};
+    rstr      test5 = {.data = buffer5, .len = (uint16_t)strlen(buffer5)};
 
     auto      res1 = parser1.parse(test1);
     auto      res2 = parser2.parse(test2);

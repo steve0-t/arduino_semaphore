@@ -20,12 +20,13 @@
 #define RESPONSE_BUFFER_SIZE 128
 #define ENDL                 '\n'
 
-void sem_off();
-void stop_sem();
-void ready_sem();
-void go_sem();
-i8   set_state(char* response_buffer, const State state, const char* state_str);
-void provide_err_msg(Retval id, char* response_buffer);
-void print_pong(char* response_buffer);
+void   sem_off();
+void   stop_sem();
+void   ready_sem();
+void   go_sem();
+int8_t set_state(char* response_buffer, const State state,
+                 const char* state_str);
+void   provide_err_msg(Retval id, char* response_buffer);
+void   print_pong(char* response_buffer);
 
 #endif

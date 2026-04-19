@@ -1,3 +1,3 @@
 #!/bin/sh
 
-pio run -t upload
+pio run -t upload -e uno

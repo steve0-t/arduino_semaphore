@@ -1,16 +1,16 @@
 #ifndef RSTR_H
 #define RSTR_H
 
-#include "../Abbreviations/Abbreviations.h"
+#include <Arduino.h>
 
 struct rstr {
-    char* data;
-    u16   len;
+    char*    data;
+    uint16_t len;
 
-    void  clear_str() {
+    void     clear_str() {
         if (data == nullptr)
             return;
-        for (u16 i = 0; i < len; i++)
+        for (uint16_t i = 0; i < len; i++)
             data[i] = 0;
     }
 

@@ -10,8 +10,8 @@ Retval XMLParser::parse(const rstr& input) {
     char *cpy, *curr_char;
     char  buf[256] = {0};
     cpy            = input.data;
-    u8 idx = 0, buf_idx = 0;
-    i8 specification = 0;
+    uint8_t idx = 0, buf_idx = 0;
+    int8_t  specification = 0;
 
     // Serial.println(cpy);
     while ((curr_char = cpy++) != nullptr) {
@@ -56,7 +56,7 @@ Retval XMLParser::parse(const rstr& input) {
         else if (*curr_char == '"' && specification == 1) {
             specification = 0;
             if (idx == 1) {
-                for (i8 i = 0; i < TCOUNT; i++) {
+                for (int8_t i = 0; i < TCOUNT; i++) {
                     if (strcmp(buf, types[i]) == 0)
                         m_cmdType = (Type)i;
                 }
@@ -66,7 +66,7 @@ Retval XMLParser::parse(const rstr& input) {
             }
 
             if (idx == 2) {
-                for (i8 i = 0; i < SCOUNT; i++) {
+                for (int8_t i = 0; i < SCOUNT; i++) {
                     if (strcmp(buf, states[i]) == 0)
                         m_state = (State)i;
                 }
@@ -90,7 +90,7 @@ void XMLParser::reset() {
     m_xmlFields = XMLFields();
 }
 
-i8 XMLParser::isXML(const rstr& input) {
+int8_t XMLParser::isXML(const rstr& input) {
     if (input.data == nullptr)
         return -1;
     // Serial.println(input._str[0]);

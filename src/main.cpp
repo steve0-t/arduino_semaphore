@@ -28,15 +28,15 @@ int main() {
     XMLParser parser = XMLParser();
     rstr   input = {.data = (char*)malloc(CAPACITY * sizeof(char)), .len = 0};
     Retval res;
-    i8     caution_sem                           = 0;
+    int8_t caution_sem                           = 0;
     char   response_buffer[RESPONSE_BUFFER_SIZE] = {0};
 
     // blinking led stuff
-    i8        caution_led_state = 0;
-    u32       previous_milis = 0, current_millis = 0;
-    const u32 blink_interval = 1000;
+    int8_t         caution_led_state = 0;
+    uint32_t       previous_milis = 0, current_millis = 0;
+    const uint32_t blink_interval = 1000;
 
-    State     current_state = (State)-1;
+    State          current_state = (State)-1;
 
     for (;;) {
         input.clear_str();
@@ -56,7 +56,8 @@ int main() {
 #ifdef ARDUINO
         if (!Serial.available())
             continue;
-        input.len = (u16)Serial.readBytesUntil('\n', input.data, CAPACITY - 1);
+        input.len =
+            (uint16_t)Serial.readBytesUntil('\n', input.data, CAPACITY - 1);
 #else
         if (fgets(input.data, CAPACITY - 1, stdin)) {
             input.len = strlen(input.data);
@@ -77,6 +78,7 @@ int main() {
                 custom_println("Comment");
 
             if (parser.getCmpType() == SET) {
+                sem_off();
                 caution_sem   = set_state(response_buffer, parser.getState(),
                                           parser.getFields().state);
                 current_state = parser.getState();
@@ -108,14 +110,12 @@ void sem_off() {
 
 void stop_sem() {
 #ifdef ARDUINO
-    sem_off();
     digitalWrite(RED, HIGH);
 #endif
 }
 
 void ready_sem() {
 #ifdef ARDUINO
-    sem_off();
     digitalWrite(RED, HIGH);
     digitalWrite(YELLOW, HIGH);
 #endif
@@ -123,13 +123,13 @@ void ready_sem() {
 
 void go_sem() {
 #ifdef ARDUINO
-    sem_off();
     digitalWrite(GREEN, HIGH);
 #endif
 }
 
-i8 set_state(char* response_buffer, const State state, const char* state_str) {
-    i8 ret = 0;
+int8_t set_state(char* response_buffer, const State state,
+                 const char* state_str) {
+    int8_t ret = 0;
     switch (state) {
         case STOP: stop_sem(); break;
         case READY: ready_sem(); break;
