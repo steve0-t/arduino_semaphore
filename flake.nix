@@ -39,6 +39,7 @@
 
         platformio
         platformio-core.udev
+        unity-test
       ];
 
       shellHook = ''
