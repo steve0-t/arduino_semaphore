@@ -4,24 +4,22 @@
 #include "../Abbreviations/Abbreviations.h"
 
 struct rstr {
-    char* _str;
-    u64   len;
+    char* data;
+    u16   len;
 
     void  clear_str() {
-        if (_str == nullptr)
+        if (data == nullptr)
             return;
-        for (u64 i = 0; i < len; i++)
-            _str[i] = 0;
+        for (u16 i = 0; i < len; i++)
+            data[i] = 0;
     }
 
     char front() const {
-        return (_str != nullptr) ? _str[0] : 0;
+        return (data != nullptr) ? data[0] : 0;
     }
 
     char back() const {
-        return (_str != nullptr && len != 0) ?
-            _str[len - 1] :
-            0;
+        return (data != nullptr && len != 0) ? data[len - 1] : 0;
     }
 };
 
