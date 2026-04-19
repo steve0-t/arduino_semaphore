@@ -36,6 +36,8 @@ int main() {
     u32       previous_milis = 0, current_millis = 0;
     const u32 blink_interval = 1000;
 
+    State     current_state = (State)-1;
+
     for (;;) {
         input.clear_str();
         parser.reset();
@@ -75,16 +77,19 @@ int main() {
                 custom_println("Comment");
 
             if (parser.getCmpType() == SET) {
-                caution_sem = set_state(response_buffer, parser.getState(),
-                                        parser.getFields().state);
+                caution_sem   = set_state(response_buffer, parser.getState(),
+                                          parser.getFields().state);
+                current_state = parser.getState();
             } else if (parser.getCmpType() == PING) {
                 print_pong(response_buffer);
             } else if (parser.getCmpType() == GET) {
-                memset(response_buffer, 0, RESPONSE_BUFFER_SIZE);
-                snprintf(response_buffer, RESPONSE_BUFFER_SIZE,
-                         "<rsp status=\"ok\" state=\"%s\"/>",
-                         parser.getFields().state);
-                custom_println(response_buffer);
+                if (current_state >= 0 && current_state < SCOUNT) {
+                    memset(response_buffer, 0, RESPONSE_BUFFER_SIZE);
+                    snprintf(response_buffer, RESPONSE_BUFFER_SIZE,
+                             "<rsp status=\"ok\" state=\"%s\"/>",
+                             states[current_state]);
+                    custom_println(response_buffer);
+                }
             }
         }
     }
