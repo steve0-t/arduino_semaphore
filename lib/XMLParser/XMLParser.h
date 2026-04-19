@@ -1,10 +1,15 @@
 #ifndef XML_PARSER_H
 #define XML_PARSER_H
 
-#include <Arduino.h>
 #include "../Abbreviations/Abbreviations.h"
 #include "../Rstr/Rstr.h"
 #include "../XMLFields/XMLFields.h"
+
+#ifdef ARDUINO
+#include <Arduino.h>
+#else
+#include <cstring>
+#endif
 
 #define OPENING_BRACKET '<'
 #define CLOSING_BRACKET '>'

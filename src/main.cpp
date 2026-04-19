@@ -1,22 +1,21 @@
-#include "Arduino.h"
-#include "HardwareSerial.h"
-#include "pins_arduino.h"
-#include <avr/interrupt.h>
-#include "../lib/Rstr/Rstr.h"
-#include "../lib/XMLParser/XMLParser.h"
-#include "../lib/Pins/Pins.h"
+#include "main.h"
 
-#define RESPONSE_BUFFER_SIZE 128
+#define CAPACITY 512
 
-void sem_off();
-void stop_sem();
-void ready_sem();
-void go_sem();
-i8   set_state(char* response_buffer, const State state, const char* state_str);
-void provide_err_msg(Retval id, char* response_buffer);
-void print_pong(char* response_buffer);
+#ifdef ARDUINO
+#define custom_println(str)                                                    \
+    do {                                                                       \
+        Serial.println((str));                                                 \
+    } while (0)
+#else
+#define custom_println(str)                                                    \
+    do {                                                                       \
+        std::cout << (str) << ENDL;                                            \
+    } while (0)
+#endif
 
-int  main() {
+int main() {
+#ifdef ARDUINO
     init();
 
 #if defined(USBCON)
@@ -24,12 +23,13 @@ int  main() {
 #endif
 
     Serial.begin(115200);
+#endif
 
     XMLParser parser = XMLParser();
-    rstr      input  = {._str = (char*)malloc(256 * sizeof(char)), .len = 0};
-    Retval    res;
-    i8        caution_sem                           = 0;
-    char      response_buffer[RESPONSE_BUFFER_SIZE] = {0};
+    rstr   input = {.data = (char*)malloc(CAPACITY * sizeof(char)), .len = 0};
+    Retval res;
+    i8     caution_sem                           = 0;
+    char   response_buffer[RESPONSE_BUFFER_SIZE] = {0};
 
     // blinking led stuff
     i8        caution_led_state = 0;
@@ -40,6 +40,7 @@ int  main() {
         input.clear_str();
         parser.reset();
 
+#ifdef ARDUINO
         if (caution_sem) {
             current_millis = millis();
             if (current_millis - previous_milis >= blink_interval) {
@@ -48,57 +49,78 @@ int  main() {
                 digitalWrite(YELLOW, caution_led_state);
             }
         }
+#endif
 
-        if (Serial.available()) {
-            input.len = (u64)Serial.readBytesUntil('\n', input._str, 255);
-            // Serial.println(input._str);
-            if ((res = parser.parse(input)) < VALID) {
-                // Serial.println("invalid!");
-                if (res > 0 && res < VALID)
-                    provide_err_msg(res, response_buffer);
-            } else {
-                if (res == COMMENT)
-                    Serial.println("Comment");
+#ifdef ARDUINO
+        if (!Serial.available())
+            continue;
+        input.len = (u16)Serial.readBytesUntil('\n', input.data, CAPACITY - 1);
+#else
+        if (fgets(input.data, CAPACITY - 1, stdin)) {
+            input.len = strlen(input.data);
+            if (input.len > 0 && input.data[input.len - 1] == ENDL) {
+                input.data[input.len - 1] = 0;
+                input.len--;
+            }
+        }
+#endif
 
-                if (parser.getCmpType() == SET) {
-                    caution_sem = set_state(response_buffer, parser.getState(),
-                                            parser.getFields().state);
-                } else if (parser.getCmpType() == PING) {
-                    print_pong(response_buffer);
-                } else if (parser.getCmpType() == GET) {
-                    memset(response_buffer, 0, RESPONSE_BUFFER_SIZE);
-                    snprintf(response_buffer, RESPONSE_BUFFER_SIZE,
-                             "<rsp status=\"ok\" state=\"%s\"/>",
-                             parser.getFields().state);
-                    Serial.println(response_buffer);
-                }
+        // Serial.println(input._str);
+        if ((res = parser.parse(input)) < VALID) {
+            // Serial.println("invalid!");
+            if (res > 0 && res < VALID)
+                provide_err_msg(res, response_buffer);
+        } else {
+            if (res == COMMENT)
+                custom_println("Comment");
+
+            if (parser.getCmpType() == SET) {
+                caution_sem = set_state(response_buffer, parser.getState(),
+                                        parser.getFields().state);
+            } else if (parser.getCmpType() == PING) {
+                print_pong(response_buffer);
+            } else if (parser.getCmpType() == GET) {
+                memset(response_buffer, 0, RESPONSE_BUFFER_SIZE);
+                snprintf(response_buffer, RESPONSE_BUFFER_SIZE,
+                         "<rsp status=\"ok\" state=\"%s\"/>",
+                         parser.getFields().state);
+                custom_println(response_buffer);
             }
         }
     }
 
-    free(input._str);
+    free(input.data);
     return 0;
 }
 
 void sem_off() {
+#ifdef ARDUINO
     digitalWrite(RED, LOW);
     digitalWrite(YELLOW, LOW);
     digitalWrite(GREEN, LOW);
+#endif
 }
 
 void stop_sem() {
+#ifdef ARDUINO
     sem_off();
     digitalWrite(RED, HIGH);
+#endif
 }
 
 void ready_sem() {
+#ifdef ARDUINO
     sem_off();
     digitalWrite(RED, HIGH);
     digitalWrite(YELLOW, HIGH);
+#endif
 }
+
 void go_sem() {
+#ifdef ARDUINO
     sem_off();
     digitalWrite(GREEN, HIGH);
+#endif
 }
 
 i8 set_state(char* response_buffer, const State state, const char* state_str) {
@@ -115,7 +137,7 @@ i8 set_state(char* response_buffer, const State state, const char* state_str) {
     memset(response_buffer, 0, RESPONSE_BUFFER_SIZE);
     snprintf(response_buffer, RESPONSE_BUFFER_SIZE,
              "<rsp status=\"ok\" state=\"%s\"/>", state_str);
-    Serial.println(response_buffer);
+    custom_println(response_buffer);
     return ret;
 }
 
@@ -123,12 +145,12 @@ void provide_err_msg(Retval id, char* response_buffer) {
     memset(response_buffer, 0, RESPONSE_BUFFER_SIZE);
     snprintf(response_buffer, RESPONSE_BUFFER_SIZE,
              "<rsp status=\"error\" code=\"%s\"/>", responses[id - 1]);
-    Serial.println(response_buffer);
+    custom_println(response_buffer);
 }
 
 void print_pong(char* response_buffer) {
     memset(response_buffer, 0, RESPONSE_BUFFER_SIZE);
     snprintf(response_buffer, RESPONSE_BUFFER_SIZE,
              "<rsp status=\"ok\" msg=\"PONG\"/>");
-    Serial.println(response_buffer);
+    custom_println(response_buffer);
 }
