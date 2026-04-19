@@ -52,3 +52,5 @@ In a form ```<cmd type="<type>" state="<state>"/>```
 Commands are case sensitive
 
 Only self closing tags are supported so far
+
+So far only supported platforms are native, Arduino UNO and Arduino Leonardo (tested on R3, not sure about other versions)
