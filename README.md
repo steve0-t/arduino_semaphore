@@ -1,7 +1,7 @@
 # Wiring
 
 **Requirements:**
-  - Arduino UNO
+  - Arduino UNO or Leonardo R3
   - 4 cables
   - Breadboard (5 columns is enough)
   - 3 LEDs - 1 red, 1 yellow, 1 green
@@ -29,7 +29,7 @@ Use the scripts in the scripts directory
 
 **WARNING - DO NOT RUN _upload.sh_ WHILE _run_monitor.sh_ IS RUNNING**
 
-Provided _platformio.io_ file specifies 3 environments (uno, native_run, native_test).
+Provided _platformio.io_ file specifies 4 environments (uno, leonardo, native_run, native_test).
 
 # Supported commands
 
