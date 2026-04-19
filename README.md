@@ -7,12 +7,12 @@
   - 3 LEDs - 1 red, 1 yellow, 1 green
   - 3 LEDs - 3 **220 Ohm** resistors
 
-**Connect cable from:**
+**Connect cable from pin:**
   - A1 to red LED
   - A2 to yellow LED
   - A3 to green LED
 
-Propagate current from LEDs through **220 Ohm** resistors to ground rail
+Propagate current from LEDs through **220 Ohm** resistors to ground rail connected to ground pin on board
 
 
 # Build/upload steps
