@@ -4,3 +4,4 @@ build/
 cmds.txt
 vgcore.54264
 Semaphore_UART_Assignment.pdf
+.pio/
