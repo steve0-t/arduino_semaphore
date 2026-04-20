@@ -7,8 +7,14 @@
 
 #ifdef ARDUINO
 #include <Arduino.h>
+#include <HardwareSerial.h>
 #else
 #include <cstring>
+#include <string>
+#include <cstring>
+#include <cstdlib>
+#include <cstdint>
+#include <iostream>
 #endif
 
 #define OPENING_BRACKET '<'
@@ -16,6 +22,17 @@
 #define CLOSING_DELIM   '/'
 #define WHITESPACE      ' '
 #define ASSIGNMENT      '='
+#define NLN             '\n'
+
+#define MAX_ATTRS         2
+#define MAX_ATTR_NAME_LEN 32
+
+#define SKIP_WHITESPACE(str)                                                   \
+    do {                                                                       \
+        if (*(str) != ' ')                                                     \
+            break;                                                             \
+        *(str)++;                                                              \
+    } while (1)
 
 enum Type {
     SET = 0,
@@ -47,31 +64,42 @@ enum Retval {
 
 static const char* responses[3] = {"BAD_FORMAT", "UNKNOWN_CMD", "BAD_STATE"};
 
+typedef struct {
+    rstr name;
+    rstr value;
+} xml_attr;
+
+typedef struct {
+    rstr*     name;
+    rstr      content;
+    xml_attr* attributes;
+} xml_node;
+
 class XMLParser {
   public:
     XMLParser();
+    XMLParser(const rstr& buffer);
+    XMLParser(const char* buffer);
+#ifdef ARDUINO
+    XMLParser(const String& buffer);
+#else
+    XMLParser(const std::string& buffer);
+#endif
     ~XMLParser();
 
-    void   reset();
-    int8_t isXML(const rstr& input);
-    Retval parse(const rstr& input);
+    // void      set_buffer(const rstr& buffer);
 
-    Type   getCmpType() const {
-        return m_cmdType;
-    }
-
-    State getState() const {
-        return m_state;
-    }
-
-    XMLFields getFields() const {
-        return m_xmlFields;
-    }
+    void         reset();
+    int8_t       is_xml_tag(const rstr& input);
+    xml_node*    parse_node(const rstr& input);
+    xml_attr*    get_attributes(char* input);
+    rstr*        get_tag_name(const rstr& input);
+    rstr*        rstr_cpy(const rstr* src);
+    rstr*        str_cpy(const char* src);
+    static char* xml_strtok_r(char* str, const char* delim, char** nextp);
 
   private:
-    Type      m_cmdType;
-    State     m_state;
-    XMLFields m_xmlFields;
+    rstr m_Buffer;
 };
 
 #endif

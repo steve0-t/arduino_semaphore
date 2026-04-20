@@ -1,3 +1,3 @@
 #!/bin/sh
 
-pio device monitor -b 115200 -e native
+pio device monitor -b 115200 -e native_run

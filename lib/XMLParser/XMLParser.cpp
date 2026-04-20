@@ -1,99 +1,177 @@
 #include "XMLParser.h"
+#include <cstdint>
 
-XMLParser::XMLParser() : m_cmdType(TCOUNT), m_state(SCOUNT) {}
+XMLParser::XMLParser() {
+    m_Buffer = (rstr){.data = nullptr, .len = 0};
+}
 
-XMLParser::~XMLParser() {}
+XMLParser::XMLParser(const rstr& buffer) {
+    m_Buffer = buffer;
+}
 
-Retval XMLParser::parse(const rstr& input) {
-    if (!isXML(input))
-        return BAD_FORMAT;
-    char *cpy, *curr_char;
-    char  buf[256] = {0};
-    cpy            = input.data;
-    uint8_t idx = 0, buf_idx = 0;
-    int8_t  specification = 0;
+XMLParser::XMLParser(const char* buffer) {
+    m_Buffer.len  = strlen(buffer);
+    m_Buffer.data = (char*)malloc(m_Buffer.len);
+    memcpy((void*)m_Buffer.data, (void*)buffer, m_Buffer.len);
+}
 
-    // Serial.println(cpy);
-    while ((curr_char = cpy++) != nullptr) {
-        // Serial.print(*curr_char);
-        // Serial.println(buf);
-        // Serial.println(specification);
-        if (idx == 0 && *curr_char == '!')
-            return COMMENT;
+#ifdef ARDUINO
+XMLParser::XMLParser(const String& buffer) {
+    m_Buffer.len  = buffer.length();
+    m_Buffer.data = (char*)malloc(m_Buffer.len);
+    memcpy((void*)m_Buffer.data, (void*)buffer.c_str(), m_Buffer.len);
+}
+#else
+XMLParser::XMLParser(const std::string& buffer) {
+    m_Buffer.len  = buffer.size();
+    m_Buffer.data = (char*)malloc(m_Buffer.len);
+    memcpy((void*)m_Buffer.data, (void*)buffer.c_str(), m_Buffer.len);
+}
+#endif
 
-        if (*curr_char == CLOSING_BRACKET) {
-            if (buf[buf_idx - 1] != CLOSING_DELIM)
-                return BAD_FORMAT;
-            break;
+XMLParser::~XMLParser() {
+    free(m_Buffer.data);
+}
+
+xml_node* XMLParser::parse_node(const rstr& input) {
+    if (!is_xml_tag(input))
+        return nullptr;
+
+    rstr* input_cpy = rstr_cpy(&input);
+
+    SKIP_WHITESPACE(input_cpy->data);
+    if (input_cpy->front() != OPENING_BRACKET)
+        return nullptr;
+
+    char *save_ptr, *tok;
+
+    tok = xml_strtok_r(input_cpy->data, " ", &save_ptr);
+    if (tok == nullptr)
+        return nullptr;
+
+    rstr* tag_name = (rstr*)malloc(sizeof(rstr));
+    tag_name       = str_cpy(tok);
+
+    xml_attr* attrs = get_attributes(tok);
+
+    xml_node* ret   = (xml_node*)malloc(sizeof(xml_node));
+    ret->attributes = attrs;
+    ret->name       = tag_name;
+    return ret;
+}
+
+xml_attr* XMLParser::get_attributes(char* input) {
+    xml_attr* ret = (xml_attr*)malloc(sizeof(xml_attr) * MAX_ATTRS);
+    char *    tok, *save_ptr;
+
+    u8        idx = 0;
+    while ((tok = strtok_r(nullptr, " ", &save_ptr)) != nullptr) {
+        // std::cout << tok << NLN;
+        if (idx >= MAX_ATTRS)
+            return nullptr;
+
+        ret[idx].name.data = (char*)malloc(MAX_ATTR_NAME_LEN);
+        ret[idx].name.len  = strlen(tok);
+
+        if (ret[idx].name.len > MAX_ATTR_NAME_LEN - 1) {
+#ifdef ARDUINO
+            if (Serial.available()) {
+                Serial.print("Invalid length of attribute. Originated at: ");
+                Serial.println(tok);
+            }
+#else
+            std::cout << "Invalid length of attribute. Originated at: " << tok
+                      << NLN;
+#endif
+            goto cleanup;
         }
 
-        if (*curr_char == WHITESPACE) {
-            if (idx == 0) {
-                if (strcmp(buf, "cmd") != 0)
-                    return BAD_FORMAT;
-            }
-            if (buf_idx != 0) {
-                memset((void*)buf, 0, sizeof(buf));
-                buf_idx = 0;
-                idx++;
-            }
-            continue;
-        }
-
-        if (*curr_char == OPENING_BRACKET)
-            continue;
-
-        if (*curr_char == '"' && buf[buf_idx - 1] == ASSIGNMENT) {
-            specification = 1;
-            if (strcmp(buf, "type=") == 0 || strcmp(buf, "state=") == 0) {
-                memset((void*)buf, 0, sizeof(buf));
-                buf_idx = 0;
-                continue;
-            } else
-                return BAD_FORMAT;
-        } else if (*curr_char == '"' && specification == 0)
-            return BAD_FORMAT;
-        else if (*curr_char == '"' && specification == 1) {
-            specification = 0;
-            if (idx == 1) {
-                for (int8_t i = 0; i < TCOUNT; i++) {
-                    if (strcmp(buf, types[i]) == 0)
-                        m_cmdType = (Type)i;
-                }
-                if (m_cmdType == TCOUNT)
-                    return UNKNOWN_CMD;
-                m_xmlFields.type = types[m_cmdType];
-            }
-
-            if (idx == 2) {
-                for (int8_t i = 0; i < SCOUNT; i++) {
-                    if (strcmp(buf, states[i]) == 0)
-                        m_state = (State)i;
-                }
-                if (m_state == SCOUNT)
-                    return BAD_STATE;
-                // strcpy(m_xmlFields.state, types[m_cmdType]);
-                m_xmlFields.state = states[m_state];
-            }
-            continue;
-        }
-
-        // prev_char      = curr_char;
-        buf[buf_idx++] = *curr_char;
+        memcpy((void*)ret[idx++].name.data, (void*)tok, MAX_ATTR_NAME_LEN - 1);
     }
-    return VALID;
+
+    return ret;
+
+cleanup:
+    for (int8_t i = 0; i < MAX_ATTRS; i++) {
+        if (ret[i].name.data != nullptr)
+            free(ret[i].name.data);
+    }
+    return nullptr;
 }
 
-void XMLParser::reset() {
-    m_cmdType   = TCOUNT;
-    m_state     = SCOUNT;
-    m_xmlFields = XMLFields();
+rstr* XMLParser::rstr_cpy(const rstr* src) {
+    if (src == nullptr)
+        return nullptr;
+
+    rstr* ret = (rstr*)malloc(sizeof(rstr));
+    ret->len  = src->len;
+    ret->data = (char*)malloc(ret->len);
+    memcpy((void*)ret->data, (void*)src->data, src->len);
+
+    return ret;
 }
 
-int8_t XMLParser::isXML(const rstr& input) {
-    if (input.data == nullptr)
+rstr* XMLParser::str_cpy(const char* src) {
+    if (src == nullptr)
+        return nullptr;
+
+    uint16_t len = (uint16_t)strlen(src);
+    rstr*    ret = (rstr*)malloc(sizeof(rstr));
+    ret->data    = (char*)malloc(len);
+    ret->len     = len;
+    memcpy((void*)ret, (void*)src, len);
+
+    return ret;
+}
+
+void   XMLParser::reset() {}
+
+int8_t XMLParser::is_xml_tag(const rstr& input) {
+    if (input.data == nullptr || input.len == 0)
         return -1;
-    // Serial.println(input._str[0]);
-    // Serial.println(input._str[input.len - 1]);
-    return input.front() == OPENING_BRACKET && input.back() == CLOSING_BRACKET;
+    char* tmp = input.data;
+    SKIP_WHITESPACE(tmp);
+    if (*tmp == OPENING_BRACKET) {
+        while (tmp && *tmp != NLN && *tmp != '\0') {
+            tmp++;
+            if (*tmp == CLOSING_BRACKET)
+                return 1;
+        }
+    }
+    return 0;
+}
+
+rstr* XMLParser::get_tag_name(const rstr& input) {
+    rstr* ret = rstr_cpy(&input);
+
+    SKIP_WHITESPACE(ret->data);
+
+    if (ret && ret->front() == OPENING_BRACKET)
+        ret->consume(1);
+    ret->data += strspn(ret->data, " ");
+
+    return ret;
+}
+
+char* XMLParser::xml_strtok_r(char* str, const char* delim, char** nextp) {
+    char* ret;
+
+    if (str == NULL)
+        str = *nextp;
+
+    str += strspn(str, delim);
+
+    if (*str == '\0')
+        return NULL;
+
+    ret = str;
+
+    str += strcspn(str, delim);
+
+    if (*str)
+        *str++ = '\0';
+
+    *nextp = str;
+
+    return ret;
 }

@@ -1,4 +1,5 @@
 #include "main.h"
+#include <cstdint>
 
 #define CAPACITY 512
 
@@ -53,50 +54,18 @@ int main() {
         }
 #endif
 
-#ifdef ARDUINO
-        if (!Serial.available())
+        if (get_user_input(input) == 0)
             continue;
-        input.len =
-            (uint16_t)Serial.readBytesUntil('\n', input.data, CAPACITY - 1);
-#else
-        if (fgets(input.data, CAPACITY - 1, stdin)) {
-            input.len = strlen(input.data);
-            if (input.len > 0 && input.data[input.len - 1] == ENDL) {
-                input.data[input.len - 1] = 0;
-                input.len--;
-            }
+
+        xml_node* res = parser.parse_node(input);
+        for (int8_t i = 0; i < MAX_ATTRS; i++) {
+            if (res != nullptr && res->attributes != nullptr)
+                std::cout << res->attributes[i].name.data << NLN;
         }
-#endif
+        // std::cout << res->attributes[1].name.data << NLN;
 
         // Serial.println(input._str);
-        if ((res = parser.parse(input)) < VALID) {
-            // Serial.println("invalid!");
-            if (res > 0 && res < VALID)
-                provide_err_msg(res, response_buffer);
-        } else {
-            if (res == COMMENT)
-                custom_println("Comment");
-
-            if (parser.getCmpType() == SET) {
-                sem_off();
-                caution_sem   = set_state(response_buffer, parser.getState(),
-                                          parser.getFields().state);
-                current_state = parser.getState();
-            } else if (parser.getCmpType() == PING) {
-                print_pong(response_buffer);
-            } else if (parser.getCmpType() == GET) {
-                if (current_state >= 0 && current_state < SCOUNT) {
-                    memset(response_buffer, 0, RESPONSE_BUFFER_SIZE);
-                    snprintf(response_buffer, RESPONSE_BUFFER_SIZE,
-                             "<rsp status=\"ok\" state=\"%s\"/>",
-                             states[current_state]);
-                    custom_println(response_buffer);
-                }
-            }
-        }
     }
-
-    free(input.data);
     return 0;
 }
 
@@ -158,4 +127,23 @@ void print_pong(char* response_buffer) {
     snprintf(response_buffer, RESPONSE_BUFFER_SIZE,
              "<rsp status=\"ok\" msg=\"PONG\"/>");
     custom_println(response_buffer);
+}
+
+int8_t get_user_input(rstr& buffer) {
+#ifdef ARDUINO
+    if (!Serial.available())
+        return 0;
+    buffer.len =
+        (uint16_t)Serial.readBytesUntil('\n', buffer.data, CAPACITY - 1);
+#else
+    if (fgets(buffer.data, CAPACITY - 1, stdin)) {
+        buffer.len = strlen(buffer.data);
+        if (buffer.len > 0 && buffer.data[buffer.len - 1] == ENDL) {
+            buffer.data[buffer.len - 1] = 0;
+            buffer.len--;
+        }
+    } else
+        return 0;
+#endif
+    return 1;
 }

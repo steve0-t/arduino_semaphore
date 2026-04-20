@@ -1,13 +1,22 @@
 #ifndef RSTR_H
 #define RSTR_H
 
+#ifdef ARDUINO
 #include <Arduino.h>
+#else
+#include <cstdint>
+#endif
 
 struct rstr {
     char*    data;
     uint16_t len;
 
-    void     clear_str() {
+    void     consume(uint16_t n) {
+        if (data != nullptr)
+            data += n;
+    }
+
+    void clear_str() {
         if (data == nullptr)
             return;
         for (uint16_t i = 0; i < len; i++)
