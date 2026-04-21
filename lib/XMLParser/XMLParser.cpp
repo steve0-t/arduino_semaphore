@@ -1,177 +1,117 @@
 #include "XMLParser.h"
+#include <cmath>
 #include <cstdint>
 
-XMLParser::XMLParser() {
-    m_Buffer = (rstr){.data = nullptr, .len = 0};
+XMLParser::XMLParser(const char** accepted_commands,
+                     const char** accepted_states) {
+    m_AcceptedCommands = accepted_commands;
+    m_AcceptedStates   = accepted_states;
 }
 
-XMLParser::XMLParser(const rstr& buffer) {
-    m_Buffer = buffer;
-}
+XMLParser::~XMLParser() {}
 
-XMLParser::XMLParser(const char* buffer) {
-    m_Buffer.len  = strlen(buffer);
-    m_Buffer.data = (char*)malloc(m_Buffer.len);
-    memcpy((void*)m_Buffer.data, (void*)buffer, m_Buffer.len);
-}
-
-#ifdef ARDUINO
-XMLParser::XMLParser(const String& buffer) {
-    m_Buffer.len  = buffer.length();
-    m_Buffer.data = (char*)malloc(m_Buffer.len);
-    memcpy((void*)m_Buffer.data, (void*)buffer.c_str(), m_Buffer.len);
-}
-#else
-XMLParser::XMLParser(const std::string& buffer) {
-    m_Buffer.len  = buffer.size();
-    m_Buffer.data = (char*)malloc(m_Buffer.len);
-    memcpy((void*)m_Buffer.data, (void*)buffer.c_str(), m_Buffer.len);
-}
-#endif
-
-XMLParser::~XMLParser() {
-    free(m_Buffer.data);
-}
-
-xml_node* XMLParser::parse_node(const rstr& input) {
+int8_t XMLParser::set_buffer(const rstr& input) {
     if (!is_xml_tag(input))
-        return nullptr;
-
-    rstr* input_cpy = rstr_cpy(&input);
-
-    SKIP_WHITESPACE(input_cpy->data);
-    if (input_cpy->front() != OPENING_BRACKET)
-        return nullptr;
-
-    char *save_ptr, *tok;
-
-    tok = xml_strtok_r(input_cpy->data, " ", &save_ptr);
-    if (tok == nullptr)
-        return nullptr;
-
-    rstr* tag_name = (rstr*)malloc(sizeof(rstr));
-    tag_name       = str_cpy(tok);
-
-    xml_attr* attrs = get_attributes(tok);
-
-    xml_node* ret   = (xml_node*)malloc(sizeof(xml_node));
-    ret->attributes = attrs;
-    ret->name       = tag_name;
-    return ret;
+        return 0;
+    m_Buffer = input;
+    // std::cout << "ORIGINAL LEN: " << m_Buffer.len << NLN;
+    m_Buffer.trim();
+    // std::cout << "AFTER TRIMMING LEN: " << m_Buffer.len << NLN;
+    return 1;
 }
 
-xml_attr* XMLParser::get_attributes(char* input) {
-    xml_attr* ret = (xml_attr*)malloc(sizeof(xml_attr) * MAX_ATTRS);
-    char *    tok, *save_ptr;
+const char* XMLParser::get_attribute(const char* attr) {
+    if (attr == nullptr)
+        return nullptr;
+    // std::cout << m_Buffer.data << NLN;
+    uint16_t pos = str_str(m_Buffer, attr);
+    // std::cout << m_Buffer.str_view(pos) << NLN;
 
-    u8        idx = 0;
-    while ((tok = strtok_r(nullptr, " ", &save_ptr)) != nullptr) {
-        // std::cout << tok << NLN;
-        if (idx >= MAX_ATTRS)
-            return nullptr;
-
-        ret[idx].name.data = (char*)malloc(MAX_ATTR_NAME_LEN);
-        ret[idx].name.len  = strlen(tok);
-
-        if (ret[idx].name.len > MAX_ATTR_NAME_LEN - 1) {
-#ifdef ARDUINO
-            if (Serial.available()) {
-                Serial.print("Invalid length of attribute. Originated at: ");
-                Serial.println(tok);
-            }
-#else
-            std::cout << "Invalid length of attribute. Originated at: " << tok
-                      << NLN;
-#endif
-            goto cleanup;
-        }
-
-        memcpy((void*)ret[idx++].name.data, (void*)tok, MAX_ATTR_NAME_LEN - 1);
-    }
-
-    return ret;
-
-cleanup:
-    for (int8_t i = 0; i < MAX_ATTRS; i++) {
-        if (ret[i].name.data != nullptr)
-            free(ret[i].name.data);
-    }
-    return nullptr;
-}
-
-rstr* XMLParser::rstr_cpy(const rstr* src) {
-    if (src == nullptr)
+    // std::cout << "CHECK WHETHER IT IS A SELF CLOSING TAG: "
+    //           << m_Buffer.at_pos(m_Buffer.len - 2) << NLN;
+    if (m_Buffer.at_pos((uint16_t)(m_Buffer.len - 2)) != '/')
         return nullptr;
 
-    rstr* ret = (rstr*)malloc(sizeof(rstr));
-    ret->len  = src->len;
-    ret->data = (char*)malloc(ret->len);
-    memcpy((void*)ret->data, (void*)src->data, src->len);
-
-    return ret;
+    // std::cout << "POS: " << pos << NLN;
+    return (pos != UINT16_MAX) ? get_value(pos) : nullptr;
 }
 
-rstr* XMLParser::str_cpy(const char* src) {
-    if (src == nullptr)
-        return nullptr;
+const char* XMLParser::get_value(uint16_t offset) {
+    uint16_t next_ptr = 0;
+    uint16_t ret =
+        str_tok_r(m_Buffer.str_view(offset), "\"", next_ptr) + offset + 1;
 
-    uint16_t len = (uint16_t)strlen(src);
-    rstr*    ret = (rstr*)malloc(sizeof(rstr));
-    ret->data    = (char*)malloc(len);
-    ret->len     = len;
-    memcpy((void*)ret, (void*)src, len);
+    // std::cout << NLN << "GET VALUE METHOD" << NLN;
+    // std::cout << m_Buffer.str_view(ret) << NLN << NLN;
 
-    return ret;
+    return m_Buffer.str_view(ret);
 }
 
-void   XMLParser::reset() {}
+void    XMLParser::reset() {}
 
-int8_t XMLParser::is_xml_tag(const rstr& input) {
+uint8_t XMLParser::is_xml_tag(const rstr& input) {
     if (input.data == nullptr || input.len == 0)
-        return -1;
-    char* tmp = input.data;
-    SKIP_WHITESPACE(tmp);
-    if (*tmp == OPENING_BRACKET) {
-        while (tmp && *tmp != NLN && *tmp != '\0') {
+        return 0;
+
+    uint16_t tmp = skip_whitespace(input);
+    if (input.data[tmp] == OPENING_BRACKET) {
+        while (tmp < input.len && input.data[tmp] != NLN &&
+               input.data[tmp] != '\0') {
             tmp++;
-            if (*tmp == CLOSING_BRACKET)
+            if (input.data[tmp] == CLOSING_BRACKET)
                 return 1;
         }
     }
     return 0;
 }
 
-rstr* XMLParser::get_tag_name(const rstr& input) {
-    rstr* ret = rstr_cpy(&input);
+uint16_t XMLParser::str_tok_r(const char* str, const char* delim,
+                              uint16_t& nextp) {
+    uint16_t ret = 0;
 
-    SKIP_WHITESPACE(ret->data);
+    if (str == nullptr)
+        ret = nextp;
 
-    if (ret && ret->front() == OPENING_BRACKET)
-        ret->consume(1);
-    ret->data += strspn(ret->data, " ");
+    ret += strcspn(str, delim);
+
+    nextp = ret;
 
     return ret;
 }
 
-char* XMLParser::xml_strtok_r(char* str, const char* delim, char** nextp) {
-    char* ret;
+uint16_t XMLParser::skip_whitespace(const rstr& buf) {
+    uint16_t ret = 0;
+    if (buf.data != nullptr && buf.len > 0) {
+        while (ret < buf.len && buf.data[ret] == WHITESPACE)
+            ret++;
+    }
+    return ret;
+}
 
-    if (str == NULL)
-        str = *nextp;
+uint16_t XMLParser::str_chr(const char* s, int c) {
+    uint16_t ret = 0;
+    while (s && *s != 0) {
+        if (*s + ret == c)
+            break;
+        ret++;
+    }
+    return ret;
+}
 
-    str += strspn(str, delim);
+uint16_t XMLParser::str_str(const rstr& haystack, const char* needle) {
+    const size_t len = strlen(needle);
+    if (len == 0 || haystack.empty())
+        return UINT16_MAX;
 
-    if (*str == '\0')
-        return NULL;
-
-    ret = str;
-
-    str += strcspn(str, delim);
-
-    if (*str)
-        *str++ = '\0';
-
-    *nextp = str;
-
+    uint16_t ret = 0;
+    while (ret < haystack.len) {
+        // std::cout << needle << NLN;
+        char* c = haystack.str_view(ret);
+        // if (c)
+        //     std::cout << c << NLN;
+        if (c && strncmp(c, needle, len) == 0)
+            break;
+        ret++;
+    }
     return ret;
 }

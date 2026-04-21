@@ -26,80 +26,29 @@
 
 #define MAX_ATTRS         2
 #define MAX_ATTR_NAME_LEN 32
-
-#define SKIP_WHITESPACE(str)                                                   \
-    do {                                                                       \
-        if (*(str) != ' ')                                                     \
-            break;                                                             \
-        *(str)++;                                                              \
-    } while (1)
-
-enum Type {
-    SET = 0,
-    GET,
-    PING,
-    TCOUNT
-};
-
-static const char* types[TCOUNT] = {"set", "get", "ping"};
-
-enum State {
-    STOP = 0,
-    READY,
-    GO,
-    CAUTION,
-    OFF,
-    SCOUNT
-};
-
-static const char* states[SCOUNT] = {"STOP", "READY", "GO", "CAUTION", "OFF"};
-
-enum Retval {
-    BAD_FORMAT  = 1,
-    UNKNOWN_CMD = 2,
-    BAD_STATE   = 3,
-    VALID       = 33,
-    COMMENT
-};
-
-static const char* responses[3] = {"BAD_FORMAT", "UNKNOWN_CMD", "BAD_STATE"};
-
-typedef struct {
-    rstr name;
-    rstr value;
-} xml_attr;
-
-typedef struct {
-    rstr*     name;
-    rstr      content;
-    xml_attr* attributes;
-} xml_node;
+#define TAG_NAME_MAX_LEN  16
 
 class XMLParser {
   public:
-    XMLParser();
-    XMLParser(const rstr& buffer);
-    XMLParser(const char* buffer);
-#ifdef ARDUINO
-    XMLParser(const String& buffer);
-#else
-    XMLParser(const std::string& buffer);
-#endif
+    XMLParser(const char** accepted_commands, const char** accepted_states);
     ~XMLParser();
 
-    // void      set_buffer(const rstr& buffer);
-
-    void         reset();
-    int8_t       is_xml_tag(const rstr& input);
-    xml_node*    parse_node(const rstr& input);
-    xml_attr*    get_attributes(char* input);
-    rstr*        get_tag_name(const rstr& input);
-    rstr*        rstr_cpy(const rstr* src);
-    rstr*        str_cpy(const char* src);
-    static char* xml_strtok_r(char* str, const char* delim, char** nextp);
+    uint16_t                  skip_whitespace(const rstr& buf);
+    [[nodiscard]] int8_t      set_buffer(const rstr& input);
+    void                      reset();
+    uint8_t                   is_xml_tag(const rstr& input);
+    [[nodiscard]] const char* get_attribute(const char* attr);
+    const char*               get_value(uint16_t offset);
+    static uint16_t           str_tok_r(const char* str, const char* delim,
+                                        uint16_t& nextp);
+    uint16_t                  str_str(const rstr& haystack, const char* needle);
+    // uint16_t        str_chr(const rstr& s, int c);
+    uint16_t str_chr(const char* s, int c);
 
   private:
-    rstr m_Buffer;
+    const char** m_AcceptedCommands;
+    const char** m_AcceptedStates;
+    rstr         m_Buffer;
 };
 
 #endif
