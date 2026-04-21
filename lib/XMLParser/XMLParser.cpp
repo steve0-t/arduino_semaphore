@@ -45,6 +45,10 @@ const char* XMLParser::get_value(uint16_t offset) {
     // std::cout << NLN << "GET VALUE METHOD" << NLN;
     // std::cout << m_Buffer.str_view(ret) << NLN << NLN;
 
+    // std::cout << m_Buffer.at_pos(ret - 2) << NLN;
+    if (m_Buffer.at_pos(ret - 2) != '=')
+        return nullptr;
+
     return m_Buffer.str_view(ret);
 }
 
