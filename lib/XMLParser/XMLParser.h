@@ -4,9 +4,7 @@
 // inspired by: https://github.com/ooxi/xml.c
 // thank you <3
 
-#include "../Abbreviations/Abbreviations.h"
 #include "../Rstr/Rstr.h"
-#include "../XMLFields/XMLFields.h"
 
 #ifdef ARDUINO
 #include <Arduino.h>
