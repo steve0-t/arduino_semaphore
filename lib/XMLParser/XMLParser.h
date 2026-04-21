@@ -1,6 +1,9 @@
 #ifndef XML_PARSER_H
 #define XML_PARSER_H
 
+// inspired by: https://github.com/ooxi/xml.c
+// thank you <3
+
 #include "../Abbreviations/Abbreviations.h"
 #include "../Rstr/Rstr.h"
 #include "../XMLFields/XMLFields.h"

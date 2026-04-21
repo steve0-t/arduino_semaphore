@@ -1,6 +1,7 @@
 #include "XMLParser.h"
-#include <cmath>
-#include <cstdint>
+
+// inspired by: https://github.com/ooxi/xml.c
+// thank you <3
 
 XMLParser::XMLParser(const char** accepted_commands,
                      const char** accepted_states) {
