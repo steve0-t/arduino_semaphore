@@ -1,7 +1,11 @@
 #ifndef RSTR_H
 #define RSTR_H
 
+#ifdef ARDUINO
 #include <Arduino.h>
+#else
+#include <cstdint>
+#endif
 
 struct rstr {
     char*    data;
