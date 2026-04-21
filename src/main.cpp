@@ -1,5 +1,4 @@
 #include "main.h"
-#include <cstdint>
 
 #define CAPACITY 512
 
@@ -82,6 +81,7 @@ int main() {
                     continue;
                 }
 
+                sem_off();
                 caution_sem = set_state(response_buffer, state);
                 if (caution_sem < 0) {
                     log("TRIED TO SET INVALID STATE");
