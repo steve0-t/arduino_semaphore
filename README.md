@@ -5,7 +5,7 @@
   - 4 cables
   - Breadboard (5 columns is enough)
   - 3 LEDs - 1 red, 1 yellow, 1 green
-  - 3 LEDs - 3 **220 Ohm** resistors
+  - 3 **220 Ohm** resistors
 
 **Connect cable from pin:**
   - A1 to red LED
