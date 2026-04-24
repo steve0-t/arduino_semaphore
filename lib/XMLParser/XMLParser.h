@@ -31,6 +31,7 @@
 
 class XMLParser {
   public:
+    XMLParser();
     XMLParser(const char** accepted_commands, const char** accepted_states);
     ~XMLParser();
 
@@ -38,6 +39,7 @@ class XMLParser {
     [[nodiscard]] int8_t      set_buffer(const rstr& input);
     void                      reset();
     uint8_t                   is_xml_tag(const rstr& input);
+    uint8_t                   is_comment(const rstr& input);
     [[nodiscard]] const char* get_attribute(const char* attr);
     const char*               get_value(uint16_t offset);
     static uint16_t           str_tok_r(const char* str, const char* delim,

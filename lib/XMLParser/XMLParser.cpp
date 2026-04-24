@@ -1,4 +1,5 @@
 #include "XMLParser.h"
+#include <cstdint>
 
 // inspired by: https://github.com/ooxi/xml.c
 // thank you <3
@@ -12,7 +13,7 @@ XMLParser::XMLParser(const char** accepted_commands,
 XMLParser::~XMLParser() {}
 
 int8_t XMLParser::set_buffer(const rstr& input) {
-    if (!is_xml_tag(input))
+    if (!is_xml_tag(input) || is_comment(input))
         return 0;
     m_Buffer = input;
     // std::cout << "ORIGINAL LEN: " << m_Buffer.len << NLN;
@@ -59,13 +60,25 @@ uint8_t XMLParser::is_xml_tag(const rstr& input) {
         return 0;
 
     uint16_t tmp = skip_whitespace(input);
-    if (input.data[tmp] == OPENING_BRACKET) {
-        while (tmp < input.len && input.data[tmp] != NLN &&
-               input.data[tmp] != '\0') {
+    if (input.at_pos(tmp) == OPENING_BRACKET) {
+        while (tmp < input.len && input.at_pos(tmp) != NLN &&
+               input.at_pos(tmp) != '\0') {
             tmp++;
             if (input.data[tmp] == CLOSING_BRACKET)
                 return 1;
         }
+    }
+    return 0;
+}
+
+uint8_t XMLParser::is_comment(const rstr& input) {
+    if (input.data == nullptr || input.len == 0)
+        return 0;
+
+    uint16_t tmp = skip_whitespace(input);
+    if (input.at_pos(tmp) == OPENING_BRACKET) {
+        if (tmp + 1 < input.len && input.at_pos(tmp + 1) == '!')
+            return 1;
     }
     return 0;
 }
