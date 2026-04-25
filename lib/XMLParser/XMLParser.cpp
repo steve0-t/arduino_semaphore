@@ -1,5 +1,6 @@
 #include "XMLParser.h"
 #include <cstdint>
+#include <cstdlib>
 
 // inspired by: https://github.com/ooxi/xml.c
 // thank you <3
@@ -22,26 +23,30 @@ int8_t XMLParser::set_buffer(const rstr& input) {
     return 1;
 }
 
-const char* XMLParser::get_attribute(const char* attr) {
+uint8_t XMLParser::get_attribute(const char* attr, str_view& out) {
     if (attr == nullptr)
-        return nullptr;
+        return 0;
     // std::cout << m_Buffer.data << NLN;
     uint16_t pos = str_str(m_Buffer, attr);
     // std::cout << m_Buffer.str_view(pos) << NLN;
 
+    if (pos == UINT16_MAX)
+        return 0;
+
     // std::cout << "CHECK WHETHER IT IS A SELF CLOSING TAG: "
     //           << m_Buffer.at_pos(m_Buffer.len - 2) << NLN;
     if (m_Buffer.at_pos((uint16_t)(m_Buffer.len - 2)) != '/')
-        return nullptr;
+        return 0;
 
     // std::cout << "POS: " << pos << NLN;
-    return (pos != UINT16_MAX) ? get_value(pos) : nullptr;
+    uint16_t value_len = 0;
+    out.data           = get_value(pos, value_len);
+    out.len            = value_len;
+    return 1;
 }
 
-const char* XMLParser::get_value(uint16_t offset) {
-    uint16_t next_ptr = 0;
-    uint16_t ret =
-        str_tok_r(m_Buffer.str_view(offset), "\"", next_ptr) + offset + 1;
+const char* XMLParser::get_value(uint16_t offset, uint16_t& value_len) {
+    uint16_t ret = str_tok_r(m_Buffer.str_view(offset), "\"") + offset + 1;
 
     // std::cout << NLN << "GET VALUE METHOD" << NLN;
     // std::cout << m_Buffer.str_view(ret) << NLN << NLN;
@@ -49,6 +54,14 @@ const char* XMLParser::get_value(uint16_t offset) {
     // std::cout << m_Buffer.at_pos(ret - 2) << NLN;
     if (m_Buffer.at_pos(ret - 2) != '=')
         return nullptr;
+
+    for (value_len = ret;
+         value_len < m_Buffer.len && m_Buffer.at_pos(value_len) != '"';
+         value_len++) {
+        // std::cout << m_Buffer.at_pos(value_len) << NLN;
+    }
+
+    value_len -= ret;
 
     return m_Buffer.str_view(ret);
 }
@@ -60,6 +73,8 @@ uint8_t XMLParser::is_xml_tag(const rstr& input) {
         return 0;
 
     uint16_t tmp = skip_whitespace(input);
+    // std::cout << "tmp: " << tmp << NLN;
+    // std::cout << input.at_pos(tmp) << NLN;
     if (input.at_pos(tmp) == OPENING_BRACKET) {
         while (tmp < input.len && input.at_pos(tmp) != NLN &&
                input.at_pos(tmp) != '\0') {
@@ -83,16 +98,10 @@ uint8_t XMLParser::is_comment(const rstr& input) {
     return 0;
 }
 
-uint16_t XMLParser::str_tok_r(const char* str, const char* delim,
-                              uint16_t& nextp) {
+uint16_t XMLParser::str_tok_r(const char* str, const char* delim) {
     uint16_t ret = 0;
 
-    if (str == nullptr)
-        ret = nextp;
-
     ret += strcspn(str, delim);
-
-    nextp = ret;
 
     return ret;
 }
