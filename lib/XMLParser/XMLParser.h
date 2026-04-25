@@ -50,7 +50,7 @@ class XMLParser {
     uint8_t               is_comment(const rstr& input);
     [[nodiscard]] uint8_t get_attribute(const char* attr, str_view& out);
     const char*           get_value(uint16_t offset, uint16_t& value_len);
-    static uint16_t       str_tok_r(const char* str, const char* delim);
+    uint16_t              str_tok_r(const char* str, const char* delim);
     uint16_t              str_str(const rstr& haystack, const char* needle);
     // uint16_t        str_chr(const rstr& s, int c);
     uint16_t str_chr(const char* s, int c);

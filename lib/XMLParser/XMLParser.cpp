@@ -1,9 +1,9 @@
 #include "XMLParser.h"
-#include <cstdint>
-#include <cstdlib>
 
 // inspired by: https://github.com/ooxi/xml.c
 // thank you <3
+
+XMLParser::XMLParser() {}
 
 XMLParser::XMLParser(const char** accepted_commands,
                      const char** accepted_states) {
@@ -42,24 +42,39 @@ uint8_t XMLParser::get_attribute(const char* attr, str_view& out) {
     uint16_t value_len = 0;
     out.data           = get_value(pos, value_len);
     out.len            = value_len;
-    return 1;
+
+    // return 1;
+    return (out.data == nullptr) ? 0 : 1;
 }
 
 const char* XMLParser::get_value(uint16_t offset, uint16_t& value_len) {
-    uint16_t ret = str_tok_r(m_Buffer.str_view(offset), "\"") + offset + 1;
-
-    // std::cout << NLN << "GET VALUE METHOD" << NLN;
+    int16_t ret = str_tok_r(m_Buffer.str_view(offset), "\"");
+    std::cout << m_Buffer.str_view(offset) << NLN;
+    char delim = '"';
+    if (ret == 0) {
+        delim = '\'';
+        ret   = str_tok_r(m_Buffer.str_view(offset), "'");
+        if (ret == 0)
+            return nullptr;
+    }
     // std::cout << m_Buffer.str_view(ret) << NLN << NLN;
+    ret += (offset + 1);
 
-    // std::cout << m_Buffer.at_pos(ret - 2) << NLN;
+    std::cout << "delim: " << delim << NLN;
+
     if (m_Buffer.at_pos(ret - 2) != '=')
         return nullptr;
 
-    for (value_len = ret;
-         value_len < m_Buffer.len && m_Buffer.at_pos(value_len) != '"';
-         value_len++) {
-        // std::cout << m_Buffer.at_pos(value_len) << NLN;
+    value_len = ret;
+
+    while (value_len < m_Buffer.len) {
+        if (m_Buffer.at_pos(value_len) == delim)
+            break;
+        value_len++;
     }
+
+    if (value_len == ret)
+        return nullptr;
 
     value_len -= ret;
 
@@ -99,9 +114,12 @@ uint8_t XMLParser::is_comment(const rstr& input) {
 }
 
 uint16_t XMLParser::str_tok_r(const char* str, const char* delim) {
-    uint16_t ret = 0;
+    if (str == nullptr || delim == nullptr)
+        return 0;
+    uint16_t ret = strcspn(str, delim);
 
-    ret += strcspn(str, delim);
+    if (ret == strlen(str))
+        return 0;
 
     return ret;
 }
