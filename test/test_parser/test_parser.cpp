@@ -149,6 +149,18 @@ void test_missing_attribute() {
     TEST_ASSERT_EQUAL(0, view.len);
 }
 
+void test_attribute_with_special_characters() {
+    XMLParser parser = XMLParser();
+
+    char      buffer[]    = "<tag data=\"a&b<c>d\"/>";
+    rstr      test_buffer = {.data = buffer, .len = (uint16_t)strlen(buffer)};
+    str_view  view        = DEFAULT_RET;
+
+    (void)parser.set_buffer(test_buffer);
+    auto res = parser.get_attribute("data", view);
+    TEST_ASSERT_EQUAL_STRING_LEN("a&b<c>d", view.data, view.len);
+}
+
 int main() {
     UNITY_BEGIN();
 
@@ -162,6 +174,7 @@ int main() {
     RUN_TEST(test_multiple_attributes);
     RUN_TEST(test_attribute_with_single_quotes);
     RUN_TEST(test_missing_attribute);
+    RUN_TEST(test_attribute_with_special_characters);
 
     UNITY_END();
 }
