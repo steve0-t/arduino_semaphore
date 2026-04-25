@@ -35,7 +35,7 @@ struct rstr {
     }
 
     char at_pos(uint16_t i) const {
-        return (!empty() && i > 0 && i < len) ? data[i] : 0;
+        return (!empty() && i >= 0 && i < len) ? data[i] : 0;
     }
 
     char front() const {
