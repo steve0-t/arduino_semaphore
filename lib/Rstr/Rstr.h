@@ -12,7 +12,7 @@ struct rstr {
     uint16_t len;
 
     char*    str_view(uint16_t pos) const {
-        if (pos < len && !empty())
+        if (pos < len && !empty() && pos >= 0)
             return data + pos;
         return nullptr;
     }
