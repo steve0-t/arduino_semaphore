@@ -73,36 +73,80 @@ void test_attribute_getter() {
     rstr      test4 = {.data = buffer4, .len = (uint16_t)strlen(buffer4)};
     rstr      test5 = {.data = buffer5, .len = (uint16_t)strlen(buffer5)};
 
+    str_view  test_view1 = DEFAULT_RET;
+    str_view  test_view2 = DEFAULT_RET;
+    str_view  test_view3 = DEFAULT_RET;
+    str_view  test_view4 = DEFAULT_RET;
+    str_view  test_view5 = DEFAULT_RET;
+
     (void)parser.set_buffer(test1);
-    auto res1 = parser.get_attribute("state");
-    TEST_ASSERT_EQUAL_STRING("SUPER", res1);
+    auto res1 = parser.get_attribute("state", test_view1);
+    TEST_ASSERT_EQUAL_STRING_LEN("SUPER", test_view1.data, test_view1.len);
 
     (void)parser.set_buffer(test2);
-    auto res2 = parser.get_attribute("state");
-    TEST_ASSERT_EQUAL_STRING("ARDUINO", res2);
+    auto res2 = parser.get_attribute("state", test_view2);
+    TEST_ASSERT_EQUAL_STRING_LEN("ARDUINO", test_view2.data, test_view2.len);
 
     (void)parser.set_buffer(test3);
-    auto res3 = parser.get_attribute("state");
-    TEST_ASSERT_EQUAL_STRING("COMPILER", res3);
+    auto res3 = parser.get_attribute("state", test_view3);
+    TEST_ASSERT_EQUAL_STRING_LEN("COMPILER", test_view3.data, test_view3.len);
 
     (void)parser.set_buffer(test4);
-    auto res4 = parser.get_attribute("state");
-    TEST_ASSERT_EQUAL_STRING("PARSER", res4);
+    auto res4 = parser.get_attribute("state", test_view4);
+    TEST_ASSERT_EQUAL_STRING_LEN("PARSER", test_view4.data, test_view4.len);
 
     (void)parser.set_buffer(test5);
-    auto res5 = parser.get_attribute("state");
-    TEST_ASSERT_EQUAL_STRING("ARM", res5);
+    auto res5 = parser.get_attribute("state", test_view5);
+    TEST_ASSERT_EQUAL_STRING_LEN("ARM", test_view5.data, test_view5.len);
 }
 
 void test_other_types_of_tags() {
     XMLParser parser = XMLParser();
 
     char      buffer1[35] = "<a href=\"http://localhost:3000\"/>";
-    rstr      test1       = {.data = buffer1, .len = (uint16_t)strlen(buffer1)};
+    rstr     test_buffer1 = {.data = buffer1, .len = (uint16_t)strlen(buffer1)};
+    str_view test_view1   = DEFAULT_RET;
 
-    (void)parser.set_buffer(test1);
-    auto res1 = parser.get_attribute("href");
-    TEST_ASSERT_EQUAL_STRING("http://localhost:3000", res1);
+    (void)parser.set_buffer(test_buffer1);
+    auto res1 = parser.get_attribute("href", test_view1);
+    TEST_ASSERT_EQUAL_STRING_LEN("http://localhost:3000", test_view1.data,
+                                 test_view1.len);
+}
+
+void test_multiple_attributes() {
+    XMLParser parser = XMLParser();
+
+    char buffer[] = "<img src=\"image.png\" alt=\"An image\" width=\"500\"/>";
+    rstr test_buffer = {.data = buffer, .len = (uint16_t)strlen(buffer)};
+    str_view view    = DEFAULT_RET;
+
+    (void)parser.set_buffer(test_buffer);
+    auto res = parser.get_attribute("alt", view);
+    TEST_ASSERT_EQUAL_STRING_LEN("An image", view.data, view.len);
+}
+
+void test_attribute_with_single_quotes() {
+    XMLParser parser = XMLParser();
+
+    char      buffer[]    = "<a href='https://example.com'/>";
+    rstr      test_buffer = {.data = buffer, .len = (uint16_t)strlen(buffer)};
+    str_view  view        = DEFAULT_RET;
+
+    (void)parser.set_buffer(test_buffer);
+    auto res = parser.get_attribute("href", view);
+    TEST_ASSERT_EQUAL_STRING_LEN("https://example.com", view.data, view.len);
+}
+
+void test_missing_attribute() {
+    XMLParser parser = XMLParser();
+
+    char      buffer[]    = "<tag foo=\"bar\"/>";
+    rstr      test_buffer = {.data = buffer, .len = (uint16_t)strlen(buffer)};
+    str_view  view        = DEFAULT_RET;
+
+    (void)parser.set_buffer(test_buffer);
+    auto res = parser.get_attribute("baz", view);
+    TEST_ASSERT_EQUAL(0, view.len);
 }
 
 int main() {
@@ -115,6 +159,9 @@ int main() {
     RUN_TEST(test_comment);
     RUN_TEST(test_attribute_getter);
     RUN_TEST(test_other_types_of_tags);
+    RUN_TEST(test_multiple_attributes);
+    RUN_TEST(test_attribute_with_single_quotes);
+    RUN_TEST(test_missing_attribute);
 
     UNITY_END();
 }
