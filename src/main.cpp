@@ -192,7 +192,7 @@ int8_t get_user_input(rstr& buffer) {
 
 Command get_cmd(const str_view& ptr) {
     if (ptr.data != nullptr || ptr.len != 0) {
-        print_view(ptr);
+        // print_view(ptr);
         for (uint8_t i = 0; i < CCOUNT; i++) {
             if (strncmp(ptr.data, commands[i], ptr.len) == 0)
                 return (Command)i;
@@ -212,6 +212,7 @@ State get_state(const str_view& ptr) {
     return SCOUNT;
 }
 
+#ifndef ARDUINO
 void print_view(const str_view& view) {
     if (view.data != nullptr) {
         std::cout << view.len << NLN;
@@ -220,3 +221,4 @@ void print_view(const str_view& view) {
         std::cout << NLN;
     }
 }
+#endif
