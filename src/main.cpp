@@ -1,5 +1,4 @@
 #include "main.h"
-#include <cstdint>
 
 #define CAPACITY 512
 
@@ -56,11 +55,16 @@ int main() {
             continue;
         }
 
-        if (parser.get_attribute("type", attr1) == 0) {
+        if (!parser.get_attribute("type", attr1)) {
             provide_err_msg(BAD_FORMAT, response_buffer);
             continue;
         }
+
         // std::cout << "attr1 len: " << attr1.len << NLN;
+        // if (attr1.data != nullptr)
+        //     std::cout << "attr1: " << attr1.data << NLN;
+        // else
+        //     std::cout << "attr1: " << "null" << NLN;
 
         cmd_type = get_cmd(attr1);
         if (cmd_type == CCOUNT) {
@@ -187,8 +191,8 @@ int8_t get_user_input(rstr& buffer) {
 }
 
 Command get_cmd(const str_view& ptr) {
-    if (ptr.data != nullptr || ptr.len == 0) {
-        // print_view(ptr);
+    if (ptr.data != nullptr || ptr.len != 0) {
+        print_view(ptr);
         for (uint8_t i = 0; i < CCOUNT; i++) {
             if (strncmp(ptr.data, commands[i], ptr.len) == 0)
                 return (Command)i;
@@ -198,7 +202,7 @@ Command get_cmd(const str_view& ptr) {
 }
 
 State get_state(const str_view& ptr) {
-    if (ptr.data != nullptr || ptr.len == 0) {
+    if (ptr.data != nullptr || ptr.len != 0) {
         // print_view(ptr);
         for (int8_t i = 0; i < SCOUNT; i++) {
             if (strncmp(ptr.data, states[i], ptr.len) == 0)
