@@ -49,7 +49,7 @@ uint8_t XMLParser::get_attribute(const char* attr, str_view& out) {
 
 const char* XMLParser::get_value(uint16_t offset, uint16_t& value_len) {
     int16_t ret = str_tok_r(m_Buffer.str_view(offset), "\"");
-    std::cout << m_Buffer.str_view(offset) << NLN;
+    // std::cout << m_Buffer.str_view(offset) << NLN;
     char delim = '"';
     if (ret == 0) {
         delim = '\'';
@@ -60,7 +60,7 @@ const char* XMLParser::get_value(uint16_t offset, uint16_t& value_len) {
     // std::cout << m_Buffer.str_view(ret) << NLN << NLN;
     ret += (offset + 1);
 
-    std::cout << "delim: " << delim << NLN;
+    // std::cout << "delim: " << delim << NLN;
 
     if (m_Buffer.at_pos(ret - 2) != '=')
         return nullptr;
@@ -73,7 +73,7 @@ const char* XMLParser::get_value(uint16_t offset, uint16_t& value_len) {
         value_len++;
     }
 
-    if (value_len == ret)
+    if (value_len == (uint16_t)ret)
         return nullptr;
 
     value_len -= ret;
