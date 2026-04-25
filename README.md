@@ -51,6 +51,8 @@ In a form ```<cmd type="<type>" state="<state>"/>```
 
 Commands are case sensitive
 
+Attributes with single quotes are not yet supported
+
 Only self closing tags are supported
 
 Only supported platforms are native, Arduino UNO and Arduino Leonardo (tested on R3, not sure about other versions)
