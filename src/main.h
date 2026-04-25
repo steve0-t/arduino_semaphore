@@ -72,7 +72,8 @@ void               provide_err_msg(Retval id, char* response_buffer);
 void               print_pong(char* response_buffer);
 void               provide_curr_state(State curr_state, char* response_buffer);
 [[nodiscard]] int8_t get_user_input(rstr& buffer);
-Command              parse_value(const char* ptr);
-State                parse_state(const char* ptr);
+Command              get_cmd(const str_view& ptr);
+State                get_state(const str_view& ptr);
+void                 print_view(const str_view& view);
 
 #endif

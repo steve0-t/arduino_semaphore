@@ -1,4 +1,5 @@
 #include "main.h"
+#include <cstdint>
 
 #define CAPACITY 512
 
@@ -30,7 +31,7 @@ int main() {
     uint32_t       previous_milis = 0, current_millis = 0;
     const uint32_t blink_interval = 1000;
 
-    const char *   attr1 = nullptr, *attr2 = nullptr;
+    str_view       attr1 = DEFAULT_RET, attr2 = DEFAULT_RET;
     for (;;) {
 #ifdef ARDUINO
         if (caution_sem) {
@@ -55,13 +56,13 @@ int main() {
             continue;
         }
 
-        attr1 = parser.get_attribute("type");
-        if (attr1 == nullptr) {
+        if (parser.get_attribute("type", attr1) == 0) {
             provide_err_msg(BAD_FORMAT, response_buffer);
             continue;
         }
+        // std::cout << "attr1 len: " << attr1.len << NLN;
 
-        cmd_type = parse_value(attr1);
+        cmd_type = get_cmd(attr1);
         if (cmd_type == CCOUNT) {
             provide_err_msg(UNKNOWN_CMD, response_buffer);
             continue;
@@ -69,13 +70,13 @@ int main() {
 
         switch (cmd_type) {
             case SET:
-                attr2 = parser.get_attribute("state");
-                if (attr2 == nullptr) {
+                if (parser.get_attribute("state", attr2) == 0) {
                     provide_err_msg(BAD_FORMAT, response_buffer);
                     continue;
                 }
+                // std::cout << "attr2 len: " << attr2.len << NLN;
 
-                state = parse_state(attr2);
+                state = get_state(attr2);
                 if (state == SCOUNT) {
                     provide_err_msg(BAD_STATE, response_buffer);
                     continue;
@@ -185,27 +186,33 @@ int8_t get_user_input(rstr& buffer) {
     return 1;
 }
 
-Command parse_value(const char* ptr) {
-    // std::cout << "PARSE VALUE" << NLN;
-    // std::cout << idx << NLN;
-    // std::cout << buf.str_view(idx) << NLN;
-    if (ptr != nullptr) {
-        for (int8_t i = 0; i < CCOUNT; i++) {
-            uint8_t len = (uint8_t)strlen(commands[i]);
-            if (strncmp(ptr, commands[i], len) == 0)
+Command get_cmd(const str_view& ptr) {
+    if (ptr.data != nullptr || ptr.len == 0) {
+        // print_view(ptr);
+        for (uint8_t i = 0; i < CCOUNT; i++) {
+            if (strncmp(ptr.data, commands[i], ptr.len) == 0)
                 return (Command)i;
         }
     }
     return CCOUNT;
 }
 
-State parse_state(const char* ptr) {
-    if (ptr != nullptr) {
+State get_state(const str_view& ptr) {
+    if (ptr.data != nullptr || ptr.len == 0) {
+        // print_view(ptr);
         for (int8_t i = 0; i < SCOUNT; i++) {
-            uint8_t len = (uint8_t)strlen(states[i]);
-            if (strncmp(ptr, states[i], len) == 0)
+            if (strncmp(ptr.data, states[i], ptr.len) == 0)
                 return (State)i;
         }
     }
     return SCOUNT;
+}
+
+void print_view(const str_view& view) {
+    if (view.data != nullptr) {
+        std::cout << view.len << NLN;
+        for (uint16_t i = 0; i < view.len; i++)
+            std::cout << view.data[i];
+        std::cout << NLN;
+    }
 }
